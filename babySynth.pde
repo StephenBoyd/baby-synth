@@ -25,7 +25,6 @@ float interval(double frequency, int semitones) {
   return (float) result;
 }
 
-boolean change = false;
 float frequency = interval(root, 0);
 
 void setup() {
@@ -50,14 +49,16 @@ char lastKey = ' ';
 void draw() {
   if (keyPressed && !playing) {
     println(key);
-    frequency = interval(root, keys.indexOf(key));
-    println(frequency);
-    for (int i = 0; i < numSaws; i++) {
-      sawWaves[i].play();
-      sawWaves[i].freq(frequency);
+    if (keys.indexOf(key) != -1) {
+      frequency = interval(root, keys.indexOf(key));
+      println(frequency);
+      for (int i = 0; i < numSaws; i++) {
+        sawWaves[i].play();
+        sawWaves[i].freq(frequency);
+      }
+      playing = true;
+      lastKey = key;
     }
-    playing = true;
-    lastKey = key;
   }
   if (!keyPressed && playing) {
     for (int i = 0; i < numSaws; i++) {
