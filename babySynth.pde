@@ -2,15 +2,15 @@ import processing.sound.*;
 
 final double SEMITONE_RATIO = pow(2.0, (1.0 / 12.0));
 
-int waveform = 3;
 int numWaves = 1;
 float frequency;
 double root = 110.0;
 boolean playing = false;
 char lastKey = ' ';
-char lastReleasedKey = ' ';
-char[] keysPressed;
+StringList keysPressed;
 SqrOsc[] waves;
+PFont font;
+String note;
 
 // The home row is the white keys, with a = A, d = D, r = C#.
 // String keys = new String("awsdrftghujikol;[']");
@@ -37,23 +37,6 @@ float tune(double currentFrequency, int intervalSemitones) {
   return (float) newFrequency;
 }
 
-void switchWaveforms() {
-  if (keyCode == ALT) {
-    switch (key) {
-      case '1':
-        waveform = 1;
-      case '2':
-        waveform = 2;
-      case '3':
-        waveform = 3;
-      case '4':
-        waveform = 4;
-      case '5':
-        waveform = 5;
-    }
-  }
-}
-
 void keyPressed() {
   println("keypressed: " + key);
   if (key == '+' || key == '=') {
@@ -61,9 +44,6 @@ void keyPressed() {
   }
   if (key == '-') {
     root = root / 2;
-  }
-  if (key == CODED) {
-    switchWaveforms();
   }
   if (playing && (key == lastKey)) {
     return;
@@ -77,7 +57,7 @@ void keyPressed() {
   if (keys.indexOf(key) != -1) {
     int keyInterval = keys.indexOf(key);
     frequency = tune(root, keyInterval);
-    String note = notes[keyInterval % 12];
+    note = notes[keyInterval % 12];
     println(note + " : " + frequency);
     for (int i = 0; i < numWaves; i++) {
       waves[i].play();
@@ -91,27 +71,25 @@ void keyPressed() {
 void keyReleased() {
   if (!keyPressed) {
     println("stopping: " + key);
+    note = "";
     for (int i = 0; i < numWaves; i++) {
       waves[i].stop();
     }
     playing = false;
-    lastReleasedKey = key;
   }
 }
 
 void setup() {
   println(SEMITONE_RATIO);
   size(640, 360);
-  background(0);
+  keysPressed = new StringList();
+  font = createFont("Open Sans", 48, true);
   waves = new SqrOsc[numWaves];
 
   for (int i = 0; i < numWaves; i++) {
-    // Calculate the amplitude for each oscillator
-    float sawVolume = (1.0 / numWaves) / (i + 1);
-    // Create the oscillators
+    float volume = (1.0 / numWaves) / (i + 1);
     waves[i] = new SqrOsc(this);
-    // Set the amplitudes for all oscillators
-    waves[i].amp(sawVolume);
+    waves[i].amp(volume);
   }
   frequency = tune(root, 0);
 }
@@ -123,5 +101,12 @@ void draw() {
       waves[i].stop();
     }
     playing = false;
+  }
+  background(0);
+  if (playing) {
+    textFont(font);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(note, 320, 180);
   }
 }
