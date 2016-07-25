@@ -2,15 +2,20 @@ import processing.sound.*;
 
 final double SEMITONE_RATIO = pow(2.0, (1.0 / 12.0));
 
-int numWaves = 1;
 float frequency;
 double root = 110.0;
 boolean playing = false;
 char lastKey = ' ';
 StringList keysPressed;
-SqrOsc[] waves;
+SqrOsc wave;
 PFont font;
 String note;
+Env env;
+
+float attackTime = 0.0001;
+float sustainTime = 0.1;
+float sustainLevel = 0.1;
+float releaseTime = 0.2;
 
 // The home row is the white keys, with a = A, d = D, r = C#.
 // String keys = new String("awsdrftghujikol;[']");
@@ -49,9 +54,6 @@ void keyPressed() {
     return;
   }
   if (playing) {
-    for (int i = 0; i < numWaves; i++) {
-      waves[i].stop();
-    }
     playing = false;
   }
   if (keys.indexOf(key) != -1) {
@@ -59,10 +61,8 @@ void keyPressed() {
     frequency = tune(root, keyInterval);
     note = notes[keyInterval % 12];
     println(note + " : " + frequency);
-    for (int i = 0; i < numWaves; i++) {
-      waves[i].play();
-      waves[i].freq(frequency);
-    }
+    wave.play(frequency, 0.6);
+    env.play(wave, attackTime, sustainTime, sustainLevel, releaseTime);
     playing = true;
   }
   lastKey = key;
@@ -72,9 +72,6 @@ void keyReleased() {
   if (!keyPressed) {
     println("stopping: " + key);
     note = "";
-    for (int i = 0; i < numWaves; i++) {
-      waves[i].stop();
-    }
     playing = false;
   }
 }
@@ -84,22 +81,16 @@ void setup() {
   size(640, 360);
   keysPressed = new StringList();
   font = createFont("Open Sans", 48, true);
-  waves = new SqrOsc[numWaves];
-
-  for (int i = 0; i < numWaves; i++) {
-    float volume = (1.0 / numWaves) / (i + 1);
-    waves[i] = new SqrOsc(this);
-    waves[i].amp(volume);
-  }
+  env = new Env(this);
+  float volume = 1;
+  wave = new SqrOsc(this);
+  wave.amp(volume);
   frequency = tune(root, 0);
 }
 
 void draw() {
   if (!keyPressed && playing) {
     println("stopping");
-    for (int i = 0; i < numWaves; i++) {
-      waves[i].stop();
-    }
     playing = false;
   }
   background(0);
